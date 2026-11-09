@@ -9,6 +9,7 @@ enum LiveFeature: String, CaseIterable {
     case altTab
     case lockShortcut
     case ctrlShortcuts
+    case mouseLock
 
     var menuTitle: String {
         switch self {
@@ -16,6 +17,7 @@ enum LiveFeature: String, CaseIterable {
         case .altTab: "Alt+Tab Window Switcher"
         case .lockShortcut: "Windows+L Locks the Screen"
         case .ctrlShortcuts: "PC Ctrl Shortcuts"
+        case .mouseLock: "Mouse Lock"
         }
     }
 }
@@ -56,6 +58,7 @@ final class LiveFeatures: ObservableObject {
     private let altTab = AltTabController()
     private let lock = LockShortcut()
     private let ctrlShortcuts = CtrlShortcuts()
+    let mouseLock = MouseLock()
     private var permissionTimer: Timer?
     private let defaultsKey = "enabledLiveFeatures"
 
@@ -103,6 +106,7 @@ final class LiveFeatures: ObservableObject {
     private func reconcile() {
         if !enabled.contains(.smoothScrolling) { scroller.stop() }
         if !enabled.contains(.altTab) { altTab.stop() }
+        if !enabled.contains(.mouseLock) { mouseLock.stop() }
 
         guard !enabled.isEmpty else {
             tap.stop()
@@ -115,7 +119,9 @@ final class LiveFeatures: ObservableObject {
             return
         }
         stopWaitingForPermission()
-        tap.start { [weak self] type, event in
+        // Mouse Lock has its own tap on its own thread (see MouseClampTap); this one handles keys and scrolling.
+        if enabled.contains(.mouseLock) { mouseLock.start() }
+        tap.start(types: [.keyDown, .keyUp, .flagsChanged, .scrollWheel]) { [weak self] type, event in
             MainActor.assumeIsolated { self?.handle(type, event) ?? false }
         }
     }

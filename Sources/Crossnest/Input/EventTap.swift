@@ -12,17 +12,18 @@ final class EventTap {
     private var port: CFMachPort?
     private var source: CFRunLoopSource?
     private var handler: Handler?
+    private var mask: CGEventMask = 0
 
     var isRunning: Bool { port != nil }
 
     /// Returns false if macOS refused to create the tap (usually: no Accessibility permission).
     @discardableResult
-    func start(_ handler: @escaping Handler) -> Bool {
+    func start(types: [CGEventType], _ handler: @escaping Handler) -> Bool {
+        let mask = types.reduce(CGEventMask(0)) { $0 | (CGEventMask(1) << $1.rawValue) }
+        if port != nil && mask != self.mask { stop() }  // listening for different events: rebuild
         self.handler = handler
         guard port == nil else { return true }
 
-        let types: [CGEventType] = [.keyDown, .keyUp, .flagsChanged, .scrollWheel]
-        let mask = types.reduce(CGEventMask(0)) { $0 | (CGEventMask(1) << $1.rawValue) }
         guard let port = CGEvent.tapCreate(
             // HID level: sees keys before macOS handles its own shortcuts such as Cmd+Tab.
             tap: .cghidEventTap,
@@ -38,6 +39,7 @@ final class EventTap {
         CGEvent.tapEnable(tap: port, enable: true)
         self.port = port
         self.source = source
+        self.mask = mask
         return true
     }
 

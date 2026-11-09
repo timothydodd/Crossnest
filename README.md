@@ -25,6 +25,12 @@ on a Mac.
 - **Your keyboard:** works with PC keyboards in either Windows or "Mac mode" (where Alt and Windows are
   swapped). A Detect button finds out which you have. It can also reset modifier-key remapping from
   System Settings, with a restore option.
+- **Mouse Lock (optional):** keeps the pointer inside a chosen app's window (or its screen) so it can't
+  slide onto another monitor, like a game's "confine cursor" option. Only for the apps you pick and only
+  while one is in front; switching apps releases it. Detects the window size when you add an app, with
+  per-app padding and sensitivity. Works like a game's mouse capture: Crossnest positions the pointer
+  itself using your learned pointer speed curve, so it never crosses the edge and never jitters. The
+  menu bar icon turns blue while it's holding the pointer.
 - **Menu bar icon:** while a live feature is on, Crossnest stays in the menu bar so the shortcuts keep
   working after you close the window, and it can start at login.
 - **"Where is it on Mac?":** a searchable guide covering Task Manager → Activity Monitor,
@@ -58,6 +64,10 @@ macOS remembers permissions between builds. Without one it signs ad hoc.
   level, so they can take over shortcuts such as Cmd+Tab before macOS handles them. They need
   Accessibility permission. Anything slow, like asking apps for their window list, runs off the tap's
   thread, because macOS switches a tap off if it doesn't answer quickly.
+- Mouse Lock has its own event tap on a high-priority thread. While a locked app is in front it
+  detaches the pointer from the mouse (`CGAssociateMouseAndMouseCursorPosition`), applies each
+  movement itself scaled by a speed curve learned from normal use, clamps it to the area and warps the
+  pointer there. The calibration lives in `UserDefaults` and refines itself whenever the pointer is free.
 - The app is not sandboxed, because it writes other apps' preferences and restarts Finder and the
   Dock. That means it has to be distributed outside the Mac App Store, signed with a Developer ID
   and notarized.

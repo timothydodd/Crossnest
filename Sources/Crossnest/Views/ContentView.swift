@@ -3,6 +3,7 @@ import SwiftUI
 enum SidebarItem: Hashable {
     case home
     case category(TweakCategory)
+    case mouseLock
     case guide
 }
 
@@ -25,6 +26,12 @@ struct ContentView: View {
                             .badge(onCount(category))
                             .tag(SidebarItem.category(category))
                     }
+                }
+
+                Section("Optional") {
+                    Label("Mouse Lock", systemImage: "cursorarrow.square")
+                        .badge(live.isOn(.mouseLock) ? live.mouseLock.apps.count : 0)
+                        .tag(SidebarItem.mouseLock)
                 }
 
                 Section("Help") {
@@ -65,6 +72,7 @@ struct ContentView: View {
         switch selection ?? .home {
         case .home: HomeView(selection: $selection)
         case .category(let category): CategoryView(category: category)
+        case .mouseLock: MouseLockView()
         case .guide: GuideView()
         }
     }

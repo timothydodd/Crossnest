@@ -38,9 +38,32 @@ struct CrossnestApp: App {
                 .environmentObject(engine)
                 .environmentObject(live)
         } label: {
-            Image(systemName: "arrow.uturn.down.square")
+            MenuBarIcon(mouseLock: live.mouseLock)
         }
     }
+}
+
+/// Grey template icon normally; blue while Mouse Lock is holding the pointer.
+private struct MenuBarIcon: View {
+    @ObservedObject var mouseLock: MouseLock
+
+    var body: some View {
+        Image(nsImage: mouseLock.isLocking ? Self.lockedIcon : Self.normalIcon)
+    }
+
+    private static let normalIcon: NSImage = {
+        let image = NSImage(systemSymbolName: "arrow.uturn.down.square", accessibilityDescription: "Crossnest")!
+        image.isTemplate = true
+        return image
+    }()
+
+    private static let lockedIcon: NSImage = {
+        let config = NSImage.SymbolConfiguration(paletteColors: [.systemBlue])
+        let image = NSImage(systemSymbolName: "arrow.uturn.down.square", accessibilityDescription: "Crossnest: Mouse Lock active")!
+            .withSymbolConfiguration(config)!
+        image.isTemplate = false  // keep the colour instead of the menu bar's grey
+        return image
+    }()
 }
 
 private struct MenuBarMenu: View {
@@ -61,6 +84,8 @@ private struct MenuBarMenu: View {
             Toggle(tweak.title, isOn: Binding(get: { engine.isOn(tweak) },
                                               set: { engine.set(tweak, on: $0) }))
         }
+        Toggle("Mouse Lock", isOn: Binding(get: { live.isOn(.mouseLock) },
+                                           set: { live.set(.mouseLock, on: $0) }))
         Divider()
         Toggle("Open at Login", isOn: Binding(get: { live.opensAtLogin },
                                               set: { live.setOpensAtLogin($0) }))
